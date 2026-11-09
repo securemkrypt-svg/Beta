@@ -15,9 +15,11 @@
       --text-muted: #94a3b8;
       --border: #1e293b;
       --terminal-bg: #020617;
-      --terminal-text: #38bdf8;
       --success: #10b981;
       --danger: #ef4444;
+      --warn-bg: rgba(245, 158, 11, 0.1);
+      --warn-border: #f59e0b;
+      --warn-text: #fbbf24;
     }
 
     * {
@@ -34,11 +36,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 20px;
+      padding: 30px 20px;
     }
 
     .container {
-      max-width: 950px;
+      max-width: 1100px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -50,7 +52,7 @@
       justify-content: space-between;
       align-items: center;
       background: var(--card-bg);
-      padding: 24px;
+      padding: 20px 24px;
       border-radius: 8px;
       border: 1px solid var(--border);
     }
@@ -59,7 +61,7 @@
       background: var(--accent);
       color: #fff;
       border: none;
-      padding: 10px 24px;
+      padding: 10px 22px;
       font-size: 14px;
       font-weight: 600;
       border-radius: 6px;
@@ -160,25 +162,21 @@
       color: #fff;
     }
 
-    .form-group input:focus, 
-    .form-group select:focus, 
-    .form-group textarea:focus {
-      border-color: var(--accent);
-    }
-
-    /* Output Console */
+    /* Output Console View */
     .output-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .output-card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
     }
 
     .badge {
@@ -200,20 +198,120 @@
       color: var(--danger);
     }
 
-    pre#jsonOutput {
+    /* Dedicated Copiable SOC Recommendation Box */
+    .soc-rec-card {
+      display: none;
+      background: #161e2e;
+      border: 1px solid var(--warn-border);
+      border-left: 5px solid var(--warn-border);
+      border-radius: 6px;
+      padding: 18px;
+      position: relative;
+    }
+
+    .soc-rec-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .soc-rec-header h4 {
+      color: var(--warn-text);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .copy-btn {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: #334155;
+      border-color: #64748b;
+    }
+
+    .copy-btn.copied {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .soc-rec-content {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      font-family: inherit;
+    }
+
+    /* Target Render Container for the Injected n8n HTML */
+    #renderedReport {
+      background: #ffffff;
+      color: #111827;
+      border-radius: 6px;
+      padding: 24px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+    }
+
+    #renderedReport:empty {
+      display: none;
+    }
+
+    /* Modern Table Overrides for n8n HTML */
+    #renderedReport h2 {
+      font-size: 16px;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      color: #0f172a;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+    #renderedReport table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 18px;
+      font-size: 13px;
+    }
+    #renderedReport th {
+      background: #f1f5f9;
+      color: #475569;
+      width: 220px;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      text-align: left;
+    }
+    #renderedReport td {
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      color: #1e293b;
+    }
+
+    /* Default Console View Prior to Ingestion */
+    #statusPlaceholder {
       background: var(--terminal-bg);
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 18px;
-      color: var(--terminal-text);
+      padding: 24px;
+      color: #38bdf8;
       font-family: "SFMono-Regular", Consolas, "Courier New", monospace;
       font-size: 13px;
       line-height: 1.5;
-      white-space: pre-wrap;
-      word-break: break-all;
-      min-height: 280px;
-      max-height: 520px;
-      overflow-y: auto;
     }
   </style>
 </head>
@@ -225,17 +323,35 @@
     <div class="header-bar">
       <div>
         <h2>Security Investigation Automation</h2>
-        <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Trigger n8n webhook with SOC incident parameters and stream consolidated JSON</p>
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Trigger n8n webhook with SOC incident parameters and stream rendered report</p>
       </div>
       <button class="btn-action" onclick="toggleDrawer(true)">Initiate</button>
     </div>
 
+    <!-- Output Section -->
     <div class="output-card">
       <div class="output-card-header">
-        <h3>Consolidated Output Stream</h3>
+        <h3>Investigation Report</h3>
         <span class="badge" id="statusBadge">Idle</span>
       </div>
-      <pre id="jsonOutput">// Click "Initiate" to fill and post the incident parameters...</pre>
+
+      <!-- Copiable SOC Recommendations Panel -->
+      <div class="soc-rec-card" id="socRecCard">
+        <div class="soc-rec-header">
+          <h4>SOC TRIAGE RECOMMENDATION</h4>
+          <button class="copy-btn" id="copyRecBtn" onclick="copyRecommendations()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>Copy Recommendation</span>
+          </button>
+        </div>
+        <div class="soc-rec-content" id="socRecContent"></div>
+      </div>
+
+      <!-- Dynamic HTML Render Target -->
+      <div id="renderedReport"></div>
+
+      <!-- Pre-submission Console Status Placeholder -->
+      <div id="statusPlaceholder">// Click "Initiate" to trigger the workflow...</div>
     </div>
   </div>
 
@@ -247,7 +363,6 @@
     </div>
 
     <form id="investigationForm" onsubmit="handleFormSubmit(event)">
-      <!-- Alert Name Dropdown -->
       <div class="form-group">
         <label for="alertName">Alert Name</label>
         <select id="alertName" required>
@@ -260,13 +375,11 @@
         </select>
       </div>
 
-      <!-- IP Address -->
       <div class="form-group">
-        <label for="ipAddress">IP Address</label>
+        <label for="ipAddress">IPAddress</label>
         <input type="text" id="ipAddress" placeholder="e.g. 44.44.55.55" required />
       </div>
 
-      <!-- Client Tool Dropdown -->
       <div class="form-group">
         <label for="clientTool">Client Tool</label>
         <select id="clientTool" required>
@@ -279,20 +392,18 @@
         </select>
       </div>
 
-      <!-- Raw Data -->
       <div class="form-group">
         <label for="rawData">Raw Data</label>
         <input type="text" id="rawData" placeholder="e.g. 2323" required />
       </div>
 
-      <!-- Auto-Generated SubmittedAt Timestamp -->
       <div class="form-group">
         <label for="submittedAt">Submitted At (Auto-generated)</label>
         <input type="text" id="submittedAt" readonly style="opacity: 0.8; font-size: 12px;" />
       </div>
 
       <button type="submit" class="btn-action" id="submitBtn" style="width: 100%; margin-top: 15px;">
-        Post to n8n Automation
+        Post to Automation
       </button>
     </form>
   </aside>
@@ -332,7 +443,9 @@
 
       const submitBtn = document.getElementById("submitBtn");
       const statusBadge = document.getElementById("statusBadge");
-      const outputArea = document.getElementById("jsonOutput");
+      const statusPlaceholder = document.getElementById("statusPlaceholder");
+      const renderedContainer = document.getElementById("renderedReport");
+      const socRecCard = document.getElementById("socRecCard");
 
       const payload = {
         "Alert Name": document.getElementById("alertName").value,
@@ -346,19 +459,22 @@
 
       submitBtn.disabled = true;
       statusBadge.className = "badge active";
+      statusPlaceholder.style.display = "block";
+      renderedContainer.innerHTML = "";
+      socRecCard.style.display = "none";
 
       let secondsLeft = 10;
-      outputArea.textContent = `[*] Payload dispatched:\n${JSON.stringify(payload, null, 2)}\n\n[*] Waiting ${secondsLeft}s for pipeline enrichment and model verdict...`;
+      statusPlaceholder.textContent = `[*] Payload dispatched:\n${JSON.stringify(payload, null, 2)}\n\n[*] Waiting ${secondsLeft}s for pipeline enrichment and model analysis...`;
       statusBadge.textContent = `Processing (${secondsLeft}s)`;
 
       const timer = setInterval(() => {
         secondsLeft--;
         if (secondsLeft > 0) {
-          outputArea.textContent = `[*] Payload dispatched:\n${JSON.stringify(payload, null, 2)}\n\n[*] Waiting ${secondsLeft}s for pipeline enrichment and model verdict...`;
+          statusPlaceholder.textContent = `[*] Payload dispatched:\n${JSON.stringify(payload, null, 2)}\n\n[*] Waiting ${secondsLeft}s for pipeline enrichment and model analysis...`;
           statusBadge.textContent = `Processing (${secondsLeft}s)`;
         } else {
           clearInterval(timer);
-          outputArea.textContent = `[*] 5 seconds elapsed. Fetching consolidated data from n8n pipeline...`;
+          statusPlaceholder.textContent = `[*] Retrieving rendered investigation template ...`;
           statusBadge.textContent = "Fetching...";
         }
       }, 1000);
@@ -378,19 +494,61 @@
           throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
         }
 
-        const consolidatedData = await response.json();
+        const result = await response.json();
 
-        statusBadge.className = "badge active";
-        statusBadge.textContent = "Completed (200 OK)";
-        outputArea.textContent = JSON.stringify(consolidatedData, null, 2);
+        // Extract raw HTML from array or object wrapping
+        let rawHtml = "";
+        if (Array.isArray(result) && result[0]?.html) {
+          rawHtml = result[0].html;
+        } else if (result?.html) {
+          rawHtml = result.html;
+        } else if (result?.body?.[0]?.html) {
+          rawHtml = result.body[0].html;
+        } else if (typeof result === "string") {
+          rawHtml = result;
+        }
+
+        if (rawHtml) {
+          statusPlaceholder.style.display = "none";
+          renderedContainer.innerHTML = rawHtml;
+
+          // Extract recommendation content (.rec) into copiable header card
+          const recElement = renderedContainer.querySelector(".rec");
+          if (recElement) {
+            const recText = recElement.innerText.trim();
+            document.getElementById("socRecContent").textContent = recText;
+            socRecCard.style.display = "block";
+            // Remove duplicate original inline rec block from bottom table
+            recElement.remove();
+          }
+
+          statusBadge.className = "badge active";
+          statusBadge.textContent = "Completed (200 OK)";
+        } else {
+          statusPlaceholder.textContent = JSON.stringify(result, null, 2);
+        }
 
       } catch (err) {
         statusBadge.className = "badge error";
         statusBadge.textContent = "Failed";
-        outputArea.textContent = `[!] Error communicating with n8n Webhook:\n${err.message}\n\nTroubleshooting tips:\n1. Ensure your workflow in n8n is toggled ACTIVE in the top right.\n2. Confirm the final node is 'Respond to Webhook' returning {{ $json }}.`;
+        statusPlaceholder.textContent = `[!] Error communicating with n8n Webhook:\n${err.message}`;
       } finally {
         submitBtn.disabled = false;
       }
+    }
+
+    function copyRecommendations() {
+      const text = document.getElementById("socRecContent").innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById("copyRecBtn");
+        const span = btn.querySelector("span");
+        btn.classList.add("copied");
+        span.textContent = "Copied to Clipboard!";
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          span.textContent = "Copy Recommendation";
+        }, 2000);
+      });
     }
   </script>
 </body>
