@@ -347,7 +347,7 @@
       submitBtn.disabled = true;
       statusBadge.className = "badge active";
 
-      let secondsLeft = 5;
+      let secondsLeft = 10;
       outputArea.textContent = `[*] Payload dispatched:\n${JSON.stringify(payload, null, 2)}\n\n[*] Waiting ${secondsLeft}s for pipeline enrichment and model verdict...`;
       statusBadge.textContent = `Processing (${secondsLeft}s)`;
 
